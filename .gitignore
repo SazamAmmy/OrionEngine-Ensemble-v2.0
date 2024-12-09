@@ -1,0 +1,43 @@
+# Common ignore rules
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# macOS specific
+._*
+
+# Frontend (Dart/Flutter)
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/build/
+frontend/pubspec.lock
+frontend/.idea/
+frontend/.packages
+
+# Backend (Python)
+backend/__pycache__/
+backend/*.pyc
+backend/env/
+backend/.env
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/htmlcov/
+
+# AI folder (general rules for models/data)
+AI/models/
+AI/data/
+AI/__pycache__/
+AI/*.pyc
+
+# Ignore virtual environments globally if stored elsewhere
+.env/
+.vscode/
+
+# Other IDE configurations (if applicable)
+.idea/
+*.iml
