@@ -41,3 +41,6 @@ AI/*.pyc
 # Other IDE configurations (if applicable)
 .idea/
 *.iml
+
+# environment variables
+**/.env
