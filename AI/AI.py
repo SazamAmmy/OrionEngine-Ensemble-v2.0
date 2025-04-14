@@ -83,3 +83,28 @@ Return response in json format [{}]
             ),
         )
         return response.text
+    
+    @classmethod
+    def create_suggestions(cls, user_profile):
+        system_instruction ="""
+You are EcoGenie, a friendly and helpful AI assistant passionate about sustainability. 
+Your purpose is to provide information, tips, and resources to help users live more eco-consciously. 
+
+You should personalize your suggestions based on the user's profile provided below. 
+
+user_profile: {user_profile}
+"""     
+        response = cls.client.models.generate_content(
+            model = "gemini-2.0-flash",
+            contents = """
+As part of the onboarding, give user a list of suggestions that they can later pick and choose from for later for deeper explanation.
+The suggestions should be practical and actionable, focusing on sustainability and eco-friendly practices. 
+Wrap each suggestion in a <suggetion> tag for easy parsing. Each suggestion should have title and small description. example:
+<suggetion>
+**Compost Food Scraps:** Start a compost bin to turn food scraps and yard waste into nutrient-rich soil for your garden.
+</suggetion> """,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction.format(user_profile=user_profile),
+            ),
+        )
+        return response.text
