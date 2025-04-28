@@ -18,6 +18,24 @@ class AI:
     # Convert the embeddings from string to list of floats
     products["embedding"] = products["embedding"].apply(lambda x: np.fromstring(x[1:-1], sep=",").astype(float))
 
+    # Tools for the AI
+    # function definition to make product recommendations
+    get_products_from_query = {
+        "name": "make_product_recommendations",
+        "description": "Get a list of relevant products from the vector database based on a query.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "items": {"type": "string"},
+                    "description": "The query to search for products. Make it relevant to the user's profile.",
+                },
+            },
+            "required": ["query"],
+        },
+    }
+
     @classmethod
     def get_response(cls, chat_history, user_profile):
         system_instruction = """
@@ -163,11 +181,8 @@ Based on this, paraphrase the user's query in a way that will return the most re
         return products_to_return
 
     @classmethod
-    def get_product_using_profile(cls, user_profile, start=0, count=20):
+    def get_product_query_from_profile(cls, user_profile, start=0, count=20):
         # Generating a paraphrased query from the user profile
-        paraphrased_query = cls.paraphrase_query(f"Create a query based on this profile: {user_profile}")
+        query = cls.paraphrase_query(f"Create a query based on this profile: {user_profile}")
 
-        # Get products using the paraphrased query
-        products = cls.get_products(paraphrased_query, start, count)
-
-        return products
+        return query
