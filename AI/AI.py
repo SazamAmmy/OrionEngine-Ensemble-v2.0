@@ -181,7 +181,7 @@ Based on this, paraphrase the user's query in a way that will return the most re
         return products_to_return
 
     @classmethod
-    def get_product_query_from_profile(cls, user_profile, start=0, count=20):
+    def get_product_query_from_profile(cls, user_profile):
         # Generating a paraphrased query from the user profile
         query = cls.paraphrase_query(f"Create a query based on this profile: {user_profile}")
 
