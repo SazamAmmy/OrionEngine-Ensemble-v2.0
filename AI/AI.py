@@ -117,7 +117,7 @@ only response the list of suggestions and nothing else. Do not add anything else
         return response.text
     
     @classmethod
-    def get_products(cls, query, start=0, count=20):
+    def paraphrase_query(cls, query):
         system_instruction = """
 You are EcoGenie, a friendly and helpful AI assistant passionate about sustainability.
 Your purpose is to provide information, tips, and resources to help users live more eco-consciously.
@@ -137,16 +137,19 @@ Based on this, paraphrase the user's query in a way that will return the most re
                     system_instruction=system_instruction,
             ),
         )
+
+        return response.text
         
+    @classmethod
+    def get_products(cls, query, start=0, count=20):
         # Embedding the paraphrased query
         response = cls.client.models.embed_content(
             model="text-embedding-004",
-            contents=[response.text],
+            contents=[query],
             config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"))
 
         embedded_query = response.embeddings[0].values
 
-        product_embeddings = cls.products
         # Finding the most similar products using dot product
         dot_product = np.dot(np.stack(cls.products["embedding"]), embedded_query)
 
@@ -158,3 +161,13 @@ Based on this, paraphrase the user's query in a way that will return the most re
 
         products_to_return = products_to_return[["title", "brand", "description", "image-link", "site-link"]].to_dict(orient="records")
         return products_to_return
+
+    @classmethod
+    def get_product_using_profile(cls, user_profile, start=0, count=20):
+        # Generating a paraphrased query from the user profile
+        paraphrased_query = cls.paraphrase_query(f"Create a query based on this profile: {user_profile}")
+
+        # Get products using the paraphrased query
+        products = cls.get_products(paraphrased_query, start, count)
+
+        return products
