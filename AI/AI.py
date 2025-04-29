@@ -20,21 +20,38 @@ class AI:
 
     # Tools for the AI
     # function definition to make product recommendations
-    get_products_from_query = {
+    make_product_recommendations = {
         "name": "make_product_recommendations",
-        "description": "Get a list of relevant products from the vector database based on a query.",
+        "description": "Gets a list of relevant products from the vector database based on query.",
         "parameters": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "items": {"type": "string"},
-                    "description": "The query to search for products. Make it relevant to the user's profile.",
+                    "description": "The query to search for products. Make it relevant to the user's need.",
                 },
             },
             "required": ["query"],
         },
     }
+
+    # update profile function
+    update_profile = {
+        "name": "update_profile",
+        "description": "Updates the user's profile when new information is found..",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "new_profile": {
+                    "type": "string",
+                    "description": "The updated user profile combining the old profile with new information.",
+                },
+            },
+            "required": ["new_profile"],
+        },
+    }
+
+    tools = types.Tool(function_declarations=[update_profile, make_product_recommendations])
 
     @classmethod
     def get_response(cls, chat_history, user_profile):
@@ -43,22 +60,52 @@ You are EcoGenie, a friendly and helpful AI assistant passionate about sustainab
 Your purpose is to provide information, tips, and resources to help users live more eco-consciously. 
 
 You should personalize your suggestions based on the user's profile provided below. 
-
 user_profile: {user_profile}
 
-If you identify new information about the user that could be added to their profile, create an updated profile text. To do this,
-start your response with {{new_profile: "updated profile text"}}, followed by a newline character, and then the rest of your response. 
+- If you identify new information about the user that doesn't exist in user_profile, create an updated profile text. To do this, call the function update_profile with the new profile text.
+
+- If you think some product recommendation might help the user, call the function make_product_recommendations with a relevant query. The function will return a list of products. Suggest the most relevant products from the list to the user. Give a short description of the product and why it might be useful for the user and the site link to buy it.
 
 If a user asks a question unrelated to sustainability, politely inform them that you are focused on helping people live more sustainably and cannot answer their question.
 """     
         response = cls.client.models.generate_content(
             model = "gemini-2.0-flash",
             contents = [types.Content(role=content.get("role"), parts=[types.Part.from_text(text=content.get("parts"))]) for content in chat_history],
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction.format(user_profile=user_profile),
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction.format(user_profile=user_profile),
+                tools=[cls.tools]
             ),
         )
-        return response.text
+        
+        # check for function calls
+        for part in response.candidates[0].content.parts:
+            if part.function_call:
+                if part.function_call.name == "update_profile":
+                    # get the updated profile
+                    new_profile = part.function_call.args.get("new_profile")
+
+                    # Append function call and result of the function execution to contents
+                    chat_history.append({"role": "model", "parts": f"Function call (name:{part.function_call.name}, args: {part.function_call.args})"})
+                    chat_history.append({"role": "user", "parts": f"Function response (name:{part.function_call.name}, response: {{'result': 'Profile updated successfully.'}})"})
+
+                    return {"response": cls.get_response(chat_history, new_profile).get('response'), "new_profile" :new_profile}
+                
+                elif part.function_call.name == "make_product_recommendations":
+                    # get the query
+                    query = part.function_call.args.get("query")
+                    
+                    # get the products
+                    paraphrased_query = cls.paraphrase_query(query)
+                    products = cls.get_products(paraphrased_query)
+
+                    # Append function call and result of the function execution to contents
+                    chat_history.append({"role": "model", "parts": f"Function call (name:{part.function_call.name}, args: {part.function_call.args})"})
+                    chat_history.append({"role": "user", "parts": f"Function response (name:{part.function_call.name}, response: {products})"})                    
+
+                    return {"response": cls.get_response(chat_history, user_profile).get('response')}
+            
+        return {"response": response.text}
+
     
     @classmethod
     def make_profile(cls, info):
