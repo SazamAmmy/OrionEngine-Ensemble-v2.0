@@ -1,0 +1,35 @@
+{% extends "OrionEngine/layout.html" %}
+{% block title %}About Us{% endblock %}
+{% load static %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'OrionEngine/aboutus.css' %}">
+{% endblock %}
+{% block content %}
+<section class="about-us-section">
+    <h2>Meet Our Team</h2>
+    <p>❛❛Empowering sustainable living with the intelligence of tomorrow. Meet our dedicated team of innovators, driven by a shared vision to make every choice a step towards a greener future.❜❜</p>
+    <div class="team-grid">
+        <div class="team-member">
+            <div class="photo-wrapper">
+                <img src="{% static 'OrionEngine/ohidz-photo.jpg' %}" alt="Ohidz Photo">
+            </div>
+            <h3>Ohidz</h3>
+            <span>Front End Developer</span>
+        </div>
+        <div class="team-member">
+            <div class="photo-wrapper">
+                <img src="{% static 'OrionEngine/sudip-photo.jpg' %}" alt="Sudip Photo">
+            </div>
+            <h3>Sudip</h3>
+            <span>Backend & Cybersecurity Developer</span>
+        </div>
+        <div class="team-member">
+            <div class="photo-wrapper">
+                <img src="{% static 'OrionEngine/kanwarpal-photo.jpg' %}" alt="Kanwar Photo">
+            </div>
+            <h3>Kanwarpal</h3>
+            <span>AI Developer</span>
+        </div>
+    </div>
+</section>
+{% endblock %}

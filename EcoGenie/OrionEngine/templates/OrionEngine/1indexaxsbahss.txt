@@ -1,0 +1,60 @@
+Delete garda hunxa aba yesslie. before extend layout
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to OrionEngine</title>
+    <link rel="stylesheet" href="{% static 'OrionEngine/index.css' %}">
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Ecogine <img src="{% static 'OrionEngine/leaf-logo.png' %}" alt="Leaf Logo" class="leaf-logo"></h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" style="font-weight: bold;">Home</a></li>
+                <li><a href="#" style="font-weight: bold;">Features</a></li>
+                <li><a href="#" style="font-weight: bold;">About</a></li>
+                <li><a href="#" style="font-weight: bold;">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="welcome-section">
+            <p class="larger-text" style="font-size: 23px; font-weight: bold; text-align: center;">
+                Welcome! I am Ecogine, an AI developed by OrionEngine Corp. I am here to guide you on your sustainable lifestyle journey.
+            </p>
+        </section>        
+
+        <!-- Download App Section -->
+        <section class="app-download">
+            <p><strong>Scan the QR code below to experience our sustainable lifestyle solutions with ecogine.</strong></p>
+
+            <div class="app-container">
+                <!-- QR Code Placeholder -->
+                <div class="qr-code">
+                    <img src="{% static 'OrionEngine/qr-code-placeholder.png' %}" alt="QR Code to Download App">
+                </div>
+                <!-- App Details -->
+                <div class="app-details">
+                    <a href="#" class="store-link">Available on Google Play Store</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 OrionEngine Corp. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OrionEngine{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'OrionEngine/index.css' %}">
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+        }
+    </style>
+    {% block extra_head %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const links = document.querySelectorAll('nav ul li a');
+            const content = document.querySelector('main');
+
+            links.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = e.target.getAttribute('href');
+                    
+                    if (target) {
+                        content.style.opacity = 0;
+                        setTimeout(() => {
+                            window.location.href = target;
+                            content.style.opacity = 1;
+                        }, 500); // transition duration as needed
+                    }
+                });
+            });
+        });
+    </script>
+    {% endblock %}
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>EcoGenie <img src="{% static 'OrionEngine/leaf-logo.png' %}" alt="Leaf Logo" class="leaf-logo"></h1>
+        </div>
+        <nav>
+            <ul>
+                <!-- Using Django's `url` template tag to generate correct URLs -->
+                <li><a href="{% url 'home' %}" style="font-weight: bold;">Home</a></li>
+                <li><a href="#" style="font-weight: bold;">Features</a></li>
+                <li><a href="{% url 'aboutus' %}" style="font-weight: bold;">About Us</a></li>
+                <li><a href="#" style="font-weight: bold;">Contact</a></li>
+            </ul>
+        </nav>        
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>© 2024 OrionEngine Corp. All Rights Reserved. Made with ❤️ by Sudip</p>
+    </footer>
+</body>
+</html>
