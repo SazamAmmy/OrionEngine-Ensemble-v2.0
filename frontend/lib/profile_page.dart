@@ -1,165 +1,225 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
-  _ProfilePageState createState() => _ProfilePageState();
+  ProfilePageState createState() => ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class ProfilePageState extends State<ProfilePage> {
   bool isDarkMode = false;
   bool isNotificationsEnabled = true;
   String selectedLanguage = "English";
   String userName = "Guest";
   String userEmail = "Not Logged In";
-  String lastSurveyUpdate = "";
+  bool isAdmin = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
-    _fetchSurveyTimestamp();
   }
 
   Future<void> _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
-      userName = prefs.getString('name') ?? "Guest";
+      userName = prefs.getString('username') ?? "Guest";
       userEmail = prefs.getString('email') ?? "Not Logged In";
+      isAdmin = prefs.getBool('is_staff') ?? false;
     });
   }
 
-  Future<void> _fetchSurveyTimestamp() async {
+  Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('access_token');
-
-    try {
-      final response = await http.get(
-        Uri.parse('https://direct-frog-amused.ngrok-free.app/api/user/survey-response/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final updatedAt = data['updated_at'];
-        setState(() {
-          lastSurveyUpdate = updatedAt;
-        });
-      }
-    } catch (e) {
-      print("Error fetching survey timestamp: $e");
-    }
-  }
-
-  void _logout() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token'); // Clear session
-    await prefs.remove('access_token');
-    await prefs.remove('refresh_token');
+    await prefs.clear();
+    if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/login');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Profile & Settings"), backgroundColor: Colors.green),
-      body: ListView(
-        children: [
-          ListTile(
-            leading: CircleAvatar(backgroundImage: AssetImage("assets/profile.png")),
-            title: Text(userName),
-            subtitle: Text(userEmail),
-            trailing: Icon(Icons.edit),
-            onTap: () {
-              Navigator.pushNamed(context, '/edit-profile');
-            },
-          ),
-          Divider(),
+      backgroundColor: const Color(0xFFF1F7EF),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          children: [
+            Center(
+              child: Text(
+                "Profile & Settings",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade800,
+                ),
+              ),
+            ),
 
-          ListTile(
-            leading: Icon(Icons.quiz),
-            title: Text("Your Survey"),
-            subtitle: lastSurveyUpdate.isNotEmpty ? Text("Last updated: $lastSurveyUpdate") : null,
-            trailing: Icon(Icons.refresh),
-            onTap: () {
+            const SizedBox(height: 20),
+
+            // Profile Card with Background Image
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  // *** REPLACE THIS WITH YOUR IMAGE PATH ***
+                  image: AssetImage('assets/images/profile_bg_image.png'),
+                  fit: BoxFit.cover,
+                  // Tints the image. Adjust opacity (e.g., 0.5 to 1.0) or remove based on image.
+                  // Or experiment with different BlendModes. Multiply or srcOver are common.
+                  colorFilter: ColorFilter.mode(Colors.white.withOpacity(0.7), BlendMode.dstATop), // Slightly less transparent
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.green.shade100,
+                    ),
+                    child: const Icon(Icons.person, color: Colors.green, size: 36),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    userEmail,
+                    // Adjusted color to look like the muted email in the image
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]), // Example: Darker grey
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    userName,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      // Adjusted color to look like the muted username in the image
+                      // Example: A slightly darker, potentially tinted grey or black with transparency
+                      color: Colors.green.shade800.withOpacity(0.8), // Example: Muted dark green
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // Admin Button
+            if (isAdmin) ...[
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/admin');
+                },
+                icon: const Icon(Icons.admin_panel_settings),
+                label: const Text("Admin Features"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            _buildTile(Icons.quiz, "Your Survey", onTap: () {
               Navigator.pushNamed(context, '/survey', arguments: {'retake': true});
-            },
-          ),
+            }, trailing: const Icon(Icons.refresh)),
 
-          ListTile(
-            leading: Icon(Icons.dark_mode),
-            title: Text("Dark Mode"),
-            trailing: Switch(
-              value: isDarkMode,
-              onChanged: (value) {
-                setState(() {
-                  isDarkMode = value;
-                });
-              },
+            _buildSwitchTile(Icons.dark_mode, "Dark Mode", isDarkMode, (value) {
+              setState(() => isDarkMode = value);
+            }),
+
+            _buildSwitchTile(Icons.notifications, "Notifications", isNotificationsEnabled, (value) {
+              setState(() => isNotificationsEnabled = value);
+            }),
+
+            ListTile(
+              leading: const Icon(Icons.language, color: Colors.green),
+              title: const Text("Language"),
+              trailing: DropdownButton<String>(
+                value: selectedLanguage,
+                underline: const SizedBox(),
+                onChanged: (value) => setState(() => selectedLanguage = value!),
+                items: ['English', 'Spanish', 'French'].map((lang) {
+                  return DropdownMenuItem(value: lang, child: Text(lang));
+                }).toList(),
+              ),
             ),
-          ),
 
-          ListTile(
-            leading: Icon(Icons.notifications),
-            title: Text("Notifications"),
-            trailing: Switch(
-              value: isNotificationsEnabled,
-              onChanged: (value) {
-                setState(() {
-                  isNotificationsEnabled = value;
-                });
-              },
-            ),
-          ),
+            _buildTile(Icons.color_lens, "App Theme", onTap: () { /* Enhancement */ }),
 
-          ListTile(
-            leading: Icon(Icons.language),
-            title: Text("Language"),
-            trailing: DropdownButton<String>(
-              value: selectedLanguage,
-              onChanged: (String? newValue) {
-                setState(() {
-                  selectedLanguage = newValue!;
-                });
-              },
-              items: <String>['English', 'Spanish', 'French']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-            ),
-          ),
+            _buildTile(Icons.lock, "Change Password", onTap: () {
+              Navigator.pushNamed(context, '/change_password');
+            }),
 
-          ListTile(
-            leading: Icon(Icons.lock),
-            title: Text("Change Password"),
-            onTap: () {
-              Navigator.pushNamed(context, '/change-password');
-            },
-          ),
-
-          ListTile(
-            leading: Icon(Icons.privacy_tip),
-            title: Text("Privacy Policy"),
-            onTap: () {
+            _buildTile(Icons.privacy_tip, "Privacy Policy", onTap: () {
               Navigator.pushNamed(context, '/privacy-policy');
-            },
-          ),
+            }),
 
-          ListTile(
-            leading: Icon(Icons.logout, color: Colors.red),
-            title: Text("Logout", style: TextStyle(color: Colors.red)),
-            onTap: _logout,
-          ),
-        ],
+            _buildTile(Icons.help_outline, "Help & Support", onTap: () {
+              Navigator.pushNamed(context, '/support');
+            }),
+
+            _buildTile(Icons.info_outline, "About EcoGenie", onTap: () {
+              showAboutDialog(
+                context: context,
+                applicationName: "EcoGenie",
+                applicationVersion: "v1.0.0",
+                children: const [
+                  Text("An AI-powered sustainability assistant built to help you live greener."),
+                ],
+              );
+            }),
+
+            _buildTile(Icons.logout, "Logout",
+                textColor: Colors.red,
+                iconColor: Colors.red,
+                onTap: _logout),
+
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildTile(IconData icon, String title,
+      {void Function()? onTap, Widget? trailing, Color? textColor, Color? iconColor}) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      leading: Icon(icon, color: iconColor ?? Colors.green),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: textColor ?? Colors.black87,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: trailing,
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildSwitchTile(IconData icon, String title, bool value,
+      ValueChanged<bool> onChanged) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      leading: Icon(icon, color: Colors.green),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+      trailing: Switch(value: value, onChanged: onChanged),
     );
   }
 }
