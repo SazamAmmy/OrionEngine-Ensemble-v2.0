@@ -77,7 +77,9 @@ If a user asks a question unrelated to sustainability, politely inform them that
             ),
         )
         
-        # check for function calls
+        # check for function calls. Due to the current limitations of the API, we can't resolve text that comes before the function calls.
+        # So we need to check if the function call is present in any part the response and then deal with the function call.
+        # Since the response text alongside the function call is not useful, we need to recursively get another response after dealing with the function call.
         for part in response.candidates[0].content.parts:
             if part.function_call:
                 if part.function_call.name == "update_profile":
@@ -85,8 +87,8 @@ If a user asks a question unrelated to sustainability, politely inform them that
                     new_profile = part.function_call.args.get("new_profile")
 
                     # Append function call and result of the function execution to contents
-                    chat_history.append({"role": "model", "parts": f"Function call (name:{part.function_call.name}, args: {part.function_call.args})"})
-                    chat_history.append({"role": "user", "parts": f"Function response (name:{part.function_call.name}, response: {{'result': 'Profile updated successfully.'}})"})
+                    # chat_history.append({"role": "model", "parts": f"Function call (name:{part.function_call.name}, args: {part.function_call.args})"})
+                    chat_history.append({"role": "user", "parts": f"Function response (name:{part.function_call.name}, args: {part.function_call.args}, response: {{'result': 'Profile updated successfully.'}})"})
 
                     return {"response": cls.get_response(chat_history, new_profile).get('response'), "new_profile" :new_profile}
                 
@@ -99,8 +101,8 @@ If a user asks a question unrelated to sustainability, politely inform them that
                     products = cls.get_products(paraphrased_query)
 
                     # Append function call and result of the function execution to contents
-                    chat_history.append({"role": "model", "parts": f"Function call (name:{part.function_call.name}, args: {part.function_call.args})"})
-                    chat_history.append({"role": "user", "parts": f"Function response (name:{part.function_call.name}, response: {products})"})                    
+                    # chat_history.append({"role": "model", "parts": f"Function call (name:{part.function_call.name}, args: {part.function_call.args})"})
+                    chat_history.append({"role": "user", "parts": f"Function response (name:{part.function_call.name}, args: {part.function_call.args}, response: {products})"})                    
 
                     return {"response": cls.get_response(chat_history, user_profile).get('response')}
             

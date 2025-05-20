@@ -1,0 +1,167 @@
+/* General Styling */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Roboto', sans-serif; /* Modern font */
+    background-color: #f4f9f4; /* Fallback background color */
+    background-image: url('/static/OrionEngine/background.png'); 
+    background-size: cover; 
+    background-repeat: no-repeat; /* Prevent image repetition */
+    background-position: center center;
+    color: #338934;
+    display: flex;
+    flex-direction: column; /*flexbox for layout */
+}
+
+/* Header Styling */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background-color: #395d3c;
+    color: #fff;
+}
+
+/* Main Content Styling */
+main {
+    flex: 1; /* Allow the main section to grow and fill available space */
+    padding: 20px;
+    min-height: calc(100vh - 120px); /* Subtract header and footer height */
+}
+
+/* Other sections remain unchanged */
+
+
+header .logo h1 {
+    margin: 0;
+    font-size: 30px; /* Slightly larger logo */
+    font-weight: bold;
+    display: flex;
+    align-items: center; /* Align text and logo vertically */
+}
+
+.leaf-logo {
+    width: 55px; /* Adjust the size of the leaf image */
+    height: auto; /* Maintain aspect ratio */
+    margin-left: 10px; /* Adds space between the text and logo */
+    max-height: 30px; /* Limit the height to 30px to avoid oversizing */
+}
+
+header nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+header nav ul li {
+    margin: 0 20px;
+}
+
+header nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+header nav ul li a:hover {
+    text-decoration: underline;
+}
+
+/* Welcome Section */
+.welcome-section {
+    text-align: center;
+    margin: 60px auto;
+    padding: 25px;
+    border-radius: 10px;
+    max-width: 900px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-section h2 {
+    font-size: px;
+    margin-bottom: 18px;
+    color:#0f4115;
+}
+
+.welcome-section p {
+    font-size: 20px;
+    line-height: 1.6;
+}
+
+/* App Download Section */
+.app-download {
+    text-align: center;
+    margin: 50px auto;
+    max-width: 1000px;
+}
+
+.app-download h2 {
+    font-size: 32px;
+    color: #184e1e;
+    margin-bottom: 25px;
+}
+
+.app-download p {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 40px;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.app-container .qr-code img {
+    max-width: 220px;
+    max-height: 220px;
+    border-radius: 10px;
+    border: 3.25px solid;
+    border-image: linear-gradient(135deg, #4CAF50, #2E7D32, #81C784, #1B5E20);
+    border-image-slice: 1;
+}
+
+.app-details {
+    font-size: 18px;
+}
+
+.app-details a {
+    color: #2c5f2d;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 18px;
+    margin-top: 10px;
+    display: inline-block;
+}
+.app-download p, 
+.app-details a {
+    color: #1B5E20; /* Dark Green */
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Subtle text shadow for readability */
+}
+.app-download p, 
+.app-details a {
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.app-details a:hover {
+    text-decoration: underline;
+}
+
+/* Footer Styling */
+footer {
+    margin-top: 0;
+    text-align: center;
+    padding: 20px 0;
+    background-color: #395d3c;
+    color: #fff;
+    font-size: 14px;
+}

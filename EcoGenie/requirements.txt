@@ -1,0 +1,43 @@
+# Core Django & DRF
+Django>=5.1,<5.2
+djangorestframework>=3.15.0
+djangorestframework-simplejwt>=5.3.1
+
+# Environment Variable Loader
+python-dotenv>=1.0.1
+
+# PostgreSQL Support
+psycopg2-binary>=2.9.9
+
+# Country Field for CustomUser
+django-countries>=7.5.1
+
+# Rate Limiting
+django-ratelimit>=4.1.0
+
+# Google OAuth2 Client
+google-auth>=2.29.0
+google-auth-oauthlib>=1.2.0
+
+# Email & Token Handling
+smtplib3  # Built-in
+email-validator>=2.1.1
+
+# IP Detection
+ipware>=5.0.0
+
+# Timezone Utilities
+pytz>=2024.1
+
+#for admin dashboard, cron jobs etc.
+gunicorn>=21.2.0
+whitenoise>=6.6.0
+
+# Security & Testing
+requests>=2.31.0
+
+# Cache (in-memory for OTP)
+django-redis>=5.4.0
+
+# Versioning (to keep track of installed dependencies)
+setuptools>=68.0
