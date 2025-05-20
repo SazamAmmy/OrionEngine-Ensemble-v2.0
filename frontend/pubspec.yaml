@@ -43,7 +43,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   pie_chart: ^5.2.0
   email_validator: ^2.0.1
-
+  jwt_decoder: ^2.0.1
+  google_sign_in: ^6.2.1
+  provider: ^6.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

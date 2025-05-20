@@ -33,7 +33,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://direct-frog-amused.ngrok-free.app/api/reset-password/'), // <-- Your backend reset URL
+        Uri.parse('https://direct-frog-amused.ngrok-free.app/api/reset-password/'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': widget.email,

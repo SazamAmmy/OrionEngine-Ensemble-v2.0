@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:sustainableapp/theme_provider.dart'; // Ensure this import is correct
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -9,17 +12,22 @@ class ProfilePage extends StatefulWidget {
 }
 
 class ProfilePageState extends State<ProfilePage> {
-  bool isDarkMode = false;
+  // bool isDarkMode = false; // Remove this local state for dark mode
   bool isNotificationsEnabled = true;
-  String selectedLanguage = "English";
   String userName = "Guest";
   String userEmail = "Not Logged In";
+  String? rawDateOfBirth;
+  DateTime? parsedDateOfBirth;
   bool isAdmin = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
     _loadUserData();
+    // No need to load theme here, ThemeProvider handles it.
   }
 
   Future<void> _loadUserData() async {
@@ -29,20 +37,39 @@ class ProfilePageState extends State<ProfilePage> {
       userName = prefs.getString('username') ?? "Guest";
       userEmail = prefs.getString('email') ?? "Not Logged In";
       isAdmin = prefs.getBool('is_staff') ?? false;
+      rawDateOfBirth = prefs.getString('date_of_birth');
+      if (rawDateOfBirth != null) {
+        parsedDateOfBirth = DateTime.tryParse(rawDateOfBirth!);
+      }
     });
   }
 
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.clear(); // This will also clear the saved theme preference.
+    // Consider if you want to preserve theme on logout.
+    // If so, save themeProvider.isDarkMode before clear and restore after.
     if (!mounted) return;
+    // Optionally, reset theme to light mode on logout if desired
+    // Provider.of<ThemeProvider>(context, listen: false).setTheme(false);
     Navigator.of(context).pushReplacementNamed('/login');
   }
 
   @override
   Widget build(BuildContext context) {
+    // Access ThemeProvider
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    // Define colors based on theme for elements not automatically handled by ThemeData
+    // For example, if you have custom colored containers or text that needs to adapt.
+    // However, try to rely on Theme.of(context) properties as much as possible.
+    // Color profileCardBackgroundColor = themeProvider.isDarkMode ? const Color(0xFF2C3D2C) : Colors.white;
+    // Color profileTextColor = themeProvider.isDarkMode ? Colors.white.withOpacity(0.87) : Colors.black87;
+    // Color profileIconColor = themeProvider.isDarkMode ? Colors.green.shade300 : Colors.green;
+
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F7EF),
+      // backgroundColor is handled by ThemeData.scaffoldBackgroundColor
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -53,29 +80,32 @@ class ProfilePageState extends State<ProfilePage> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green.shade800,
+                  color: Theme.of(context).colorScheme.primary, // Use color from theme
                 ),
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // Profile Card with Background Image
+            // Profile Card
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
+                // Use cardColor from theme or a specific surface color from ColorScheme
+                color: Theme.of(context).cardColor,
                 image: DecorationImage(
-                  // *** REPLACE THIS WITH YOUR IMAGE PATH ***
-                  image: AssetImage('assets/images/profile_bg_image.png'),
+                  image: const AssetImage('assets/images/profile_bg_image.png'),
                   fit: BoxFit.cover,
-                  // Tints the image. Adjust opacity (e.g., 0.5 to 1.0) or remove based on image.
-                  // Or experiment with different BlendModes. Multiply or srcOver are common.
-                  colorFilter: ColorFilter.mode(Colors.white.withOpacity(0.7), BlendMode.dstATop), // Slightly less transparent
+                  // Adjust opacity based on theme if needed, or use a different image for dark mode
+                  colorFilter: ColorFilter.mode(
+                      (themeProvider.isDarkMode ? Colors.black : Colors.white).withOpacity(0.7),
+                      BlendMode.dstATop
+                  ),
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
+                    color: Colors.black.withOpacity(themeProvider.isDarkMode ? 0.3 : 0.12),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -89,15 +119,15 @@ class ProfilePageState extends State<ProfilePage> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.green.shade100,
+                      // Use a color that contrasts well with the card background
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     ),
-                    child: const Icon(Icons.person, color: Colors.green, size: 36),
+                    child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary, size: 36),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     userEmail,
-                    // Adjusted color to look like the muted email in the image
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]), // Example: Darker grey
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -105,9 +135,35 @@ class ProfilePageState extends State<ProfilePage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      // Adjusted color to look like the muted username in the image
-                      // Example: A slightly darker, potentially tinted grey or black with transparency
-                      color: Colors.green.shade800.withOpacity(0.8), // Example: Muted dark green
+                      color: Theme.of(context).colorScheme.primary, // Or Theme.of(context).textTheme.titleLarge?.color
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (parsedDateOfBirth != null)
+                    Text(
+                      "DOB: ${DateFormat.yMMMMd().format(parsedDateOfBirth!)}",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isAdmin
+                          ? (themeProvider.isDarkMode ? Colors.red.shade700.withOpacity(0.3) : Colors.red.shade100)
+                          : (themeProvider.isDarkMode ? Colors.green.shade700.withOpacity(0.3) : Colors.green.shade100),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      isAdmin ? "🛡️ Admin" : "🌱 Sustainable User",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isAdmin
+                            ? (themeProvider.isDarkMode ? Colors.red.shade200 : Colors.red.shade800)
+                            : (themeProvider.isDarkMode ? Colors.green.shade200 : Colors.green.shade800),
+                      ),
                     ),
                   ),
                 ],
@@ -116,7 +172,6 @@ class ProfilePageState extends State<ProfilePage> {
 
             const SizedBox(height: 30),
 
-            // Admin Button
             if (isAdmin) ...[
               ElevatedButton.icon(
                 onPressed: () {
@@ -124,70 +179,132 @@ class ProfilePageState extends State<ProfilePage> {
                 },
                 icon: const Icon(Icons.admin_panel_settings),
                 label: const Text("Admin Features"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
+                // ElevatedButton style is handled by ThemeData.elevatedButtonTheme
               ),
               const SizedBox(height: 20),
             ],
 
-            _buildTile(Icons.quiz, "Your Survey", onTap: () {
-              Navigator.pushNamed(context, '/survey', arguments: {'retake': true});
-            }, trailing: const Icon(Icons.refresh)),
-
-            _buildSwitchTile(Icons.dark_mode, "Dark Mode", isDarkMode, (value) {
-              setState(() => isDarkMode = value);
-            }),
-
-            _buildSwitchTile(Icons.notifications, "Notifications", isNotificationsEnabled, (value) {
-              setState(() => isNotificationsEnabled = value);
-            }),
-
-            ListTile(
-              leading: const Icon(Icons.language, color: Colors.green),
-              title: const Text("Language"),
-              trailing: DropdownButton<String>(
-                value: selectedLanguage,
-                underline: const SizedBox(),
-                onChanged: (value) => setState(() => selectedLanguage = value!),
-                items: ['English', 'Spanish', 'French'].map((lang) {
-                  return DropdownMenuItem(value: lang, child: Text(lang));
-                }).toList(),
-              ),
+            // Dark Mode Switch
+            _buildSwitchTile(
+                Icons.dark_mode,
+                "Dark Mode",
+                themeProvider.isDarkMode, // Use value from ThemeProvider
+                    (value) {
+                  themeProvider.toggleTheme(); // Call toggleTheme on ThemeProvider
+                },
+                iconColor: Theme.of(context).iconTheme.color, // Use icon color from theme
+                textColor: Theme.of(context).textTheme.bodyLarge?.color
             ),
 
-            _buildTile(Icons.color_lens, "App Theme", onTap: () { /* Enhancement */ }),
+            _buildSwitchTile(
+                Icons.notifications,
+                "Notifications",
+                isNotificationsEnabled,
+                    (value) {
+                  setState(() => isNotificationsEnabled = value);
+                },
+                iconColor: Theme.of(context).iconTheme.color,
+                textColor: Theme.of(context).textTheme.bodyLarge?.color
+            ),
 
-            _buildTile(Icons.lock, "Change Password", onTap: () {
-              Navigator.pushNamed(context, '/change_password');
-            }),
+            _buildTile(
+                Icons.color_lens,
+                "App Theme",
+                onTap: () {
+                  // Potentially show a dialog to pick themes if you have more than light/dark
+                  // For now, dark mode switch handles it.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Theme selection (Dark/Light) is above.")));
+                },
+                iconColor: Theme.of(context).iconTheme.color,
+                textColor: Theme.of(context).textTheme.bodyLarge?.color
+            ),
+            _buildTile(
+                Icons.lock,
+                "Change Password",
+                onTap: () {
+                  Navigator.pushNamed(context, '/change_password');
+                },
+                iconColor: Theme.of(context).iconTheme.color,
+                textColor: Theme.of(context).textTheme.bodyLarge?.color
+            ),
+            _buildTile(
+                Icons.privacy_tip,
+                "Privacy Policy",
+                onTap: () {
+                  Navigator.pushNamed(context, '/privacy-policy');
+                },
+                iconColor: Theme.of(context).iconTheme.color,
+                textColor: Theme.of(context).textTheme.bodyLarge?.color
+            ),
+            _buildTile(
+                Icons.help_outline,
+                "Help & Support",
+                onTap: () {
+                  Navigator.pushNamed(context, '/support');
+                },
+                iconColor: Theme.of(context).iconTheme.color,
+                textColor: Theme.of(context).textTheme.bodyLarge?.color
+            ),
+            _buildTile(
+                Icons.info_outline,
+                "About EcoGenie",
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: true,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                      actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      // AlertDialog background and text colors will be handled by ThemeData and ColorScheme
+                      title: Row(
+                        children: [
+                          Icon(Icons.eco_outlined, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 10),
+                          Text(
+                            "About EcoGenie",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                      content: Text(
+                        "EcoGenie is your AI-powered sustainability assistant, designed to help you make greener lifestyle choices through smart insights and personalized tips.",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                          height: 1.4,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          // TextButton style is handled by ThemeData.textButtonTheme
+                          child: const Text(
+                            "CLOSE",
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                iconColor: Theme.of(context).iconTheme.color,
+                textColor: Theme.of(context).textTheme.bodyLarge?.color
+            ),
 
-            _buildTile(Icons.privacy_tip, "Privacy Policy", onTap: () {
-              Navigator.pushNamed(context, '/privacy-policy');
-            }),
-
-            _buildTile(Icons.help_outline, "Help & Support", onTap: () {
-              Navigator.pushNamed(context, '/support');
-            }),
-
-            _buildTile(Icons.info_outline, "About EcoGenie", onTap: () {
-              showAboutDialog(
-                context: context,
-                applicationName: "EcoGenie",
-                applicationVersion: "v1.0.0",
-                children: const [
-                  Text("An AI-powered sustainability assistant built to help you live greener."),
-                ],
-              );
-            }),
-
-            _buildTile(Icons.logout, "Logout",
-                textColor: Colors.red,
-                iconColor: Colors.red,
-                onTap: _logout),
+            _buildTile(
+                Icons.logout,
+                "Logout",
+                textColor: themeProvider.isDarkMode ? Colors.red.shade300 : Colors.red.shade700,
+                iconColor: themeProvider.isDarkMode ? Colors.red.shade300 : Colors.red.shade700,
+                onTap: _logout
+            ),
 
             const SizedBox(height: 30),
           ],
@@ -200,26 +317,40 @@ class ProfilePageState extends State<ProfilePage> {
       {void Function()? onTap, Widget? trailing, Color? textColor, Color? iconColor}) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      leading: Icon(icon, color: iconColor ?? Colors.green),
+      leading: Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color), // Use theme default if not specified
       title: Text(
         title,
         style: TextStyle(
-          color: textColor ?? Colors.black87,
+          color: textColor ?? Theme.of(context).textTheme.bodyLarge?.color, // Use theme default if not specified
           fontWeight: FontWeight.w500,
         ),
       ),
-      trailing: trailing,
+      trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 16), // Default trailing icon
       onTap: onTap,
     );
   }
 
   Widget _buildSwitchTile(IconData icon, String title, bool value,
-      ValueChanged<bool> onChanged) {
+      ValueChanged<bool> onChanged, {Color? textColor, Color? iconColor}) {
+    // Access ThemeProvider to style the switch based on the current theme
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      leading: Icon(icon, color: Colors.green),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-      trailing: Switch(value: value, onChanged: onChanged),
+      leading: Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color),
+      title: Text(
+          title,
+          style: TextStyle(
+              color: textColor ?? Theme.of(context).textTheme.bodyLarge?.color,
+              fontWeight: FontWeight.w500
+          )
+      ),
+      trailing: Switch(
+        value: value,
+        onChanged: onChanged,
+        // activeColor and activeTrackColor are handled by ThemeData.switchTheme
+        // inactiveThumbColor and inactiveTrackColor are also handled by ThemeData.switchTheme
+      ),
     );
   }
 }

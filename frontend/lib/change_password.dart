@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:sustainableapp/services/api_service.dart';
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart'; // Import Provider
+import 'package:sustainableapp/theme_provider.dart'; // Import ThemeProvider
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -32,41 +33,45 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     setState(() => isLoading = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token') ?? '';
-
-      final response = await http.post(
-        Uri.parse('https://direct-frog-amused.ngrok-free.app/api/change-password/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
+      const url = 'https://direct-frog-amused.ngrok-free.app/api/change-password/';
+      final response = await ApiService.post(
+        url,
+        body: {
           'current_password': currentPasswordController.text.trim(),
           'new_password': newPasswordController.text.trim(),
-        }),
+        },
       );
 
-      final data = jsonDecode(response.body);
+      if (!mounted) return; // Check mounted after await
+      final Map<String, dynamic>? data = jsonDecode(response.body) as Map<String, dynamic>?;
+
 
       if (response.statusCode == 200) {
         _showMessage('Password changed successfully!');
-        Navigator.pushReplacementNamed(context, '/profile');
+        if (mounted) { // Check mounted before navigation
+          Navigator.pushReplacementNamed(context, '/profile');
+        }
       } else {
-        _showMessage(data['message'] ?? 'Failed to change password', isError: true);
+        _showMessage(data?['message'] as String? ?? data?['detail'] as String? ?? 'Failed to change password', isError: true);
       }
     } catch (e) {
-      _showMessage('Error: $e', isError: true);
+      if (mounted) { // Check mounted before showing message
+        _showMessage('Error: $e', isError: true);
+      }
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) { // Check mounted before setState
+        setState(() => isLoading = false);
+      }
     }
   }
 
   void _showMessage(String message, {bool isError = false}) {
+    if (!mounted) return; // Check if the widget is still in the tree
+    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
+        backgroundColor: isError ? theme.colorScheme.error : theme.primaryColor, // Theme-aware
       ),
     );
   }
@@ -79,23 +84,38 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    // Define a specific background gradient for this page, can be adapted for dark mode
+    final LinearGradient pageGradient = themeProvider.isDarkMode
+        ? LinearGradient( // Dark mode gradient
+      colors: [colorScheme.surface.withOpacity(0.8), colorScheme.background],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    )
+        : const LinearGradient( // Light mode gradient (original)
+      colors: [Color(0xFF56ab2f), Color(0xFFa8e063)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+
+
     return Scaffold(
       extendBodyBehindAppBar: true, // Make gradient behind AppBar
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.transparent, // Keep transparent to show gradient
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: themeProvider.isDarkMode ? colorScheme.onSurface : Colors.white), // Theme-aware
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF56ab2f), Color(0xFFa8e063)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          gradient: pageGradient, // Use the theme-aware gradient
         ),
         child: SafeArea(
           child: Center(
@@ -108,11 +128,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.cardColor, // Theme-aware card color
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withOpacity(0.1), // Generic shadow
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
@@ -120,21 +140,20 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                       child: Column(
                         children: [
-                          const Icon(Icons.lock, size: 60, color: Colors.green),
+                          Icon(Icons.lock, size: 60, color: colorScheme.primary), // Theme-aware
                           const SizedBox(height: 20),
-                          const Text(
+                          Text(
                             "Change Password",
-                            style: TextStyle(
-                              fontSize: 24,
+                            style: textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                              color: colorScheme.primary, // Theme-aware
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             "Update your account password",
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey),
+                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant), // Theme-aware
                           ),
                           const SizedBox(height: 30),
 
@@ -143,22 +162,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             controller: currentPasswordController,
                             obscureText: obscureCurrent,
                             validator: _validatePassword,
+                            style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
                             decoration: InputDecoration(
                               hintText: 'Current Password',
-                              prefixIcon: const Icon(Icons.lock),
+                              // hintStyle, prefixIconColor, suffixIconColor, fillColor, border are handled by theme.inputDecorationTheme
+                              prefixIcon: Icon(Icons.lock, color: colorScheme.onSurfaceVariant),
                               suffixIcon: IconButton(
-                                icon: Icon(obscureCurrent ? Icons.visibility : Icons.visibility_off),
+                                icon: Icon(obscureCurrent ? Icons.visibility : Icons.visibility_off, color: colorScheme.onSurfaceVariant),
                                 onPressed: () => setState(() => obscureCurrent = !obscureCurrent),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
 
                           // New Password
@@ -166,28 +180,23 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             controller: newPasswordController,
                             obscureText: obscureNew,
                             validator: _validatePassword,
+                            style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
                             decoration: InputDecoration(
                               hintText: 'New Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
+                              prefixIcon: Icon(Icons.lock_outline, color: colorScheme.onSurfaceVariant),
                               suffixIcon: IconButton(
-                                icon: Icon(obscureNew ? Icons.visibility : Icons.visibility_off),
+                                icon: Icon(obscureNew ? Icons.visibility : Icons.visibility_off, color: colorScheme.onSurfaceVariant),
                                 onPressed: () => setState(() => obscureNew = !obscureNew),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
 
                           // Confirm Password
                           TextFormField(
                             controller: confirmPasswordController,
                             obscureText: obscureConfirm,
+                            style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
                             validator: (value) {
                               if (value == null || value.isEmpty) return 'Confirm your password';
                               if (value != newPasswordController.text) return 'Passwords do not match';
@@ -195,20 +204,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             },
                             decoration: InputDecoration(
                               hintText: 'Confirm New Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
+                              prefixIcon: Icon(Icons.lock_outline, color: colorScheme.onSurfaceVariant),
                               suffixIcon: IconButton(
-                                icon: Icon(obscureConfirm ? Icons.visibility : Icons.visibility_off),
+                                icon: Icon(obscureConfirm ? Icons.visibility : Icons.visibility_off, color: colorScheme.onSurfaceVariant),
                                 onPressed: () => setState(() => obscureConfirm = !obscureConfirm),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 30),
 
                           // Button
@@ -216,16 +218,21 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: isLoading ? null : _changePassword,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
+                              // Style is handled by theme.elevatedButtonTheme
+                              // Explicit foreground/background can be set if needed:
+                              // style: ElevatedButton.styleFrom(
+                              //   backgroundColor: colorScheme.primary,
+                              //   foregroundColor: colorScheme.onPrimary,
+                              // ),
                               child: isLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  ? SizedBox(
+                                height: 24, // Consistent height for indicator
+                                width: 24,  // Consistent width for indicator
+                                child: CircularProgressIndicator(
+                                  color: colorScheme.onPrimary, // Theme-aware
+                                  strokeWidth: 3,
+                                ),
+                              )
                                   : const Text('Change Password'),
                             ),
                           ),

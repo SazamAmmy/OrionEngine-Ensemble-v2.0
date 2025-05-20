@@ -1,26 +1,27 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AuthService {
   static const refreshUrl = 'https://direct-frog-amused.ngrok-free.app/api/token/refresh/';
 
-  // Call this to always get a valid access token
-  static Future<String?> getValidAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? accessToken = prefs.getString('access_token');
-
-    // Try test API or decode JWT to check expiration here if needed
-
-    final success = await refreshToken();
-    if (success) {
-      accessToken = prefs.getString('access_token');
+  /// Checks if token is expired
+  static bool isAccessTokenExpired(String token) {
+    try {
+      return JwtDecoder.isExpired(token);
+    } catch (_) {
+      return true;
     }
-
-    return accessToken;
   }
 
-  // Refresh token logic
+  /// Returns access token (even if expired)
+  static Future<String?> getAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
+  }
+
+  /// Refreshes token using refresh token
   static Future<bool> refreshToken() async {
     final prefs = await SharedPreferences.getInstance();
     final refreshToken = prefs.getString('refresh_token');
@@ -41,6 +42,23 @@ class AuthService {
       }
       return true;
     }
+
+    // Logout if refresh is invalid
+    await prefs.clear();
     return false;
+  }
+
+  /// Automatically gets valid access token (tries refresh)
+  static Future<String?> getValidAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? accessToken = prefs.getString('access_token');
+
+    if (accessToken == null || isAccessTokenExpired(accessToken)) {
+      final refreshed = await refreshToken();
+      if (!refreshed) return null;
+      accessToken = prefs.getString('access_token');
+    }
+
+    return accessToken;
   }
 }
