@@ -24,7 +24,7 @@ google-auth-oauthlib>=1.2.0
 email-validator>=2.1.1
 
 # IP Detection
-ipware>=5.0.0
+django-ipware>=5.0.0
 
 # Timezone Utilities
 pytz>=2024.1
