@@ -19,9 +19,12 @@ django-ratelimit>=4.1.0
 google-auth>=2.29.0
 google-auth-oauthlib>=1.2.0
 
+# Google Gemini (Generative AI)
+google-genai>=0.5.0  # For Gemini API access
+
 # Email & Token Handling
-#smtplib3  # Built-in
 email-validator>=2.1.1
+# smtplib3 is built-in, no need to list
 
 # IP Detection
 django-ipware>=5.0.0
@@ -29,7 +32,7 @@ django-ipware>=5.0.0
 # Timezone Utilities
 pytz>=2024.1
 
-#for admin dashboard, cron jobs etc.
+# For admin dashboard, cron jobs etc.
 gunicorn>=21.2.0
 whitenoise>=6.6.0
 
@@ -38,6 +41,13 @@ requests>=2.31.0
 
 # Cache (in-memory for OTP)
 django-redis>=5.4.0
+
+# Data Validation and Parsing
+pydantic>=2.7.1
+
+# Data Analysis
+pandas>=2.2.2
+numpy>=1.26.4
 
 # Versioning (to keep track of installed dependencies)
 setuptools>=68.0
